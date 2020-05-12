@@ -11,7 +11,7 @@ import { loadSkybox } from './skybox.js';
 import { loadSquare } from './square.js';
 import { buildSquare } from './square.js'
 import {GLMesh} from './glmesh.js';
-import { transformMat4 } from './gl-matrix/vec3.js'
+import { transformMat4, floor } from './gl-matrix/vec3.js'
 
 /**
  * Represents the entire scene.
@@ -57,8 +57,49 @@ export class Scene
         loadSkybox(gl,dir).then((texture) => {this.text = texture});
 
         // Square Texture
+        //const dir2 = "textures/smoke7.png";
+        this.cloud_texture = null; 
         const dir2 = "textures/smoke7.png";
         loadSquare(gl, dir2).then((cloudTexture) => {this.cloud_texture = cloudTexture});
+
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // Initialize Blend
+
+        // Number of clouds to generate
+        this.num = Math.random() * 10; 
+
+       this.cloudArray = []; // Scaling
+       this.cloudAngle = []; // Rotating
+       this.cloudTranslation = []; // Translating
+
+        // To get different size clouds 
+        for (let i = 0; i < 100; i++)
+        {
+            let scaleNum = Math.random() * 2;
+            this.cloudArray.push([scaleNum, scaleNum, 0]); 
+        }
+      //  console.log(this.cloudArray);
+       
+        // To rotate by different angles
+        for (let i = 0; i < 100; i++)
+        {  
+            let angle = Math.PI / Math.random() * 2;
+            while (angle == 0)
+            {
+                angle = Math.PI / Math.random() * 2;
+            }
+            this.cloudAngle.push(angle); 
+        }
+       // console.log(this.cloudAngle);
+
+        // To translate the clouds
+        for (let i = 0; i < 100; i++)
+        {
+            let translateNumX = Math.random() * 5;
+            let translateNumY = Math.random() * 0.25;
+            let translateNumZ = Math.random() * 1;
+            this.cloudTranslation.push([translateNumX, translateNumY, translateNumZ]);
+        }
+       
 
         //////////////
         // PART ONE //
@@ -69,25 +110,25 @@ export class Scene
         // Make sure to check for null before rendering.  Use this as an example
         // to load other OBJ files.
 
-        this.clouds = null;
-        fetch('data/clouds.obj')
-            .then( (response) => {
-                return response.text();
-            })
-            .then( (text) => {
-                let objMesh = loadObjMesh(text);
-                this.clouds = new RenderMeshBary(gl, objMesh);
-            })
+        // this.clouds = null;
+        // fetch('data/clouds.obj')
+        //     .then( (response) => {
+        //         return response.text();
+        //     })
+        //     .then( (text) => {
+        //         let objMesh = loadObjMesh(text);
+        //         this.clouds = new RenderMeshBary(gl, objMesh);
+        //     })
 
-        this.island = null;
-        fetch('data/Low+Poly+Island.obj')
-            .then( (response) => {
-                return response.text();
-            })
-            .then( (text) => {
-                let objMesh = loadObjMesh(text);
-                this.island = new RenderMeshBary(gl, objMesh);
-            })
+        // this.island = null;
+        // fetch('data/Low+Poly+Island.obj')
+        //     .then( (response) => {
+        //         return response.text();
+        //     })
+        //     .then( (text) => {
+        //         let objMesh = loadObjMesh(text);
+        //         this.island = new RenderMeshBary(gl, objMesh);
+        //     })
 
 
         ////////////////////
@@ -95,10 +136,16 @@ export class Scene
         ////////////////////
         this.cubemap = new RenderMeshBary(gl, buildCube()); // Loading the skybox cube
 
-        // Create the Square 
-        this.square = new GLMesh(gl, buildSquare());
+        // Create the Squares
+        this.squareArray = [];
+        for (let i = 0; i < 100; i++)
+        {
+            this.square = new RenderMeshBary(gl, buildSquare());
+            this.squareArray.push(this.square);
+        }
+  
         
-    }
+    } 
 
     /**
      * A convenience method to set all three matrices in the shader program.
@@ -115,41 +162,111 @@ export class Scene
         gl.uniformMatrix4fv(shader.uniform('uProj'), false, this.projMatrix);
     }
 
+    cloudScale()
+    {  
+        // To get different size clouds 
+        let scaleNum = Math.random() * 2;
+        this.cloudArray = [scaleNum, scaleNum, 0]; 
+       // mat4.scale(this.modelMatrix, this.modelMatrix, this.cloudArray);
+    }
+
+    cloudRotate()
+    {
+        // To rotate by different angles
+        let angle = Math.PI / Math.random() * 2;
+        while (angle == 0)
+        {
+            angle = Math.PI / Math.random() * 2;
+        }
+        this.cloudAngle.push(angle); 
+       // mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.cloudAngle);
+    }
+
+    cloudTranslate()
+    { 
+        // To translate the clouds
+        let translateNumX = Math.random() * -1;
+        let translateNumY = Math.random() * 0.25;
+        let translateNumZ = Math.random() * 2;
+        this.cloudTranslation = [translateNumX, translateNumY, translateNumZ];
+       // mat4.translate(this.modelMatrix, this.modelMatrix, this.cloudTranslation);
+    }
+
     drawSquare(gl, shader) 
     {
         if (this.cloud_texture !== null)
         {  
-            // gl.depthMask(false);
-            // gl.enable(gl.BLEND);
+            gl.depthMask(false);
+            gl.enable(gl.BLEND);
 
-            // Bind the texture in texture channel 0
-            gl.activeTexture(gl.TEXTURE0);
+            // Bind the texture in texture channel 1
+            gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, this.cloud_texture);
         
-            // Set the uniform to texture channel zero
-            gl.uniform1i(shader.uniform('square_texture'), 0);
+            // // Set the uniform to texture channel zero
+            gl.uniform1i(shader.uniform('square_texture'), 1);
+            mat4.identity(this.modelMatrix);
+
+            // Generate clouds! 
+            for (let i = 0; i < 100; i++)
+            {
+               // mat4.identity(this.modelMatrix);
+                // this.cloudScale();
+                // this.cloudRotate();
+                // this.cloudTranslate();
+               // mat4.identity(this.modelMatrix);
+                mat4.scale(this.modelMatrix, this.modelMatrix, this.cloudArray[i]);
+                mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.cloudAngle[i]);
+                //mat4.rotateZ(this.modelMatrix, this.modelMatrix, Math.PI / 0.5);
+                mat4.translate(this.modelMatrix, this.modelMatrix, this.cloudTranslation[i]);
+
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                
+                // Draw the Square
+                this.squareArray[i].render(gl, shader);
     
-            //Set up the cube transformation
-            mat4.identity(this.modelMatrix);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [50, 50, 50]);
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Reset the model matrix to the identity
+                mat4.identity(this.modelMatrix);
 
-          //  gl.blendFunc(gl.SCR_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                // // New Scale 
+                // let scaleNum = Math.random() * 2;
+                // this.cloudArray = [scaleNum, scaleNum, 0]; 
 
-            // During Drawing 
+                // // To rotate by different angles
+                // let angle = Math.PI / Math.random() * 2;
+                // while (angle == 0)
+                // {
+                //     angle = Math.PI / Math.random() * 2;
+                // }
+                // this.cloudAngle = angle; 
 
-            // Draw Non-Transparent Objects 
+                // // To translate the clouds
+                // let translateNumX = Math.random() * -1;
+                // let translateNumY = Math.random() * 0.25;
+                // let translateNumZ = Math.random() * 2;
 
-            // Draw Particles 
-            // Draw the Square
-            this.square.render(gl, shader);
+                // this.cloudArray = [translateNumX, translateNumY, translateNumZ];
+            }
+           
+            // Generate clouds! 
+        
+          
+            // mat4.scale(this.modelMatrix, this.modelMatrix, [3.0, 3.0, 3.0]);
+            // mat4.rotateZ(this.modelMatrix, this.modelMatrix, Math.PI / 0.5);
+            // mat4.translate(this.modelMatrix, this.modelMatrix, [1.0, 0, 2.0]);
 
-            // gl.disable(gl.BLEND);
-            // gl.depthMask(true);
+            // gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                
+            // // Draw the Square
+            // this.squareArray[1].render(gl, shader);
+    
+            // // Reset the model matrix to the identity
+             mat4.identity(this.modelMatrix);
+
+
             
-            // Reset the model matrix to the identity
-            mat4.identity(this.modelMatrix);
+            gl.disable(gl.BLEND);
+            gl.depthMask(true);
         }
     }
 
@@ -159,11 +276,13 @@ export class Scene
      * @param {WebGL2RenderingContext} gl
      * @param {ShaderProgram} shader the shader program
      */
-    drawSkybox(gl, shader){
-        if(this.text !== null){
+    drawSkybox(gl, shader)
+    {
+        if(this.text !== null)
+        {
             // Bind the texture in texture channel 0
            gl.activeTexture(gl.TEXTURE0);
-           gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text);//cubemap instead
+           gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text); // Cubemap instead
 
            // Set the uniform to texture channel zero
            gl.uniform1i(shader.uniform('cube_texture'), 0);
@@ -191,20 +310,6 @@ export class Scene
      */
     render(time, gl, flatShader, skyShader, sceneShader, squareShader) 
     {
-        //set the uniform variable for the lights 
-        // const diffuseLight = gl.getUniformLocation(sceneShader.programId, 'diffuseLight');
-        // gl.uniform3f( diffuseLight, 0.2,0.2,0.2);
-  
-        // let position = [5.0, 10.0, 1.0];
-
-        // position = transformMat4(position, position, this.viewMatrix);
-
-        // const lightPos = gl.getUniformLocation(sceneShader.programId, 'lightPos');
-        // gl.uniform3f( lightPos, position[0], position[1], position[2]);
-  
-        // const lightColor = gl.getUniformLocation(sceneShader.programId, 'lightColor');
-        // gl.uniform3f( lightColor, 0.1,0.6,0.8);
-
         this.pollKeys();
 
         // Draw the grid using flatShader
@@ -212,17 +317,36 @@ export class Scene
         this.setMatrices(gl, flatShader);
         this.grid.render(gl, flatShader);
 
+        // Sky Shader
         skyShader.use(gl);
         this.setMatrices(gl, skyShader);
         this.drawSkybox(gl, skyShader);
 
+        // Square Shader
+        squareShader.use(gl); // Enables the shader in the pipeline 
+        this.setMatrices(gl, squareShader);
+        this.drawSquare(gl, squareShader);
+
+        // this.setMatrices(gl, squareShader);
+        // this.drawSquare(gl, squareShader);
+     
+        // Scene Shader
         sceneShader.use(gl);
+        const diffuseLight = gl.getUniformLocation(sceneShader.programId, 'diffuseLight');
+        gl.uniform3f( diffuseLight, 0.2,0.2,0.2);
+   
+        let position = [5.0, 10.0, 1.0];
+ 
+        position = transformMat4(position, position, this.viewMatrix);
+ 
+        const lightPos = gl.getUniformLocation(sceneShader.programId, 'lightPos');
+        gl.uniform3f( lightPos, position[0], position[1], position[2]);
+   
+        const lightColor = gl.getUniformLocation(sceneShader.programId, 'lightColor');
+        gl.uniform3f( lightColor, 0.1,0.6,0.8);
         this.setMatrices(gl, sceneShader);
         this.drawScene(gl, sceneShader);
 
-        squareShader.use(gl);
-        this.setMatrices(gl, squareShader);
-        this.drawSquare(gl, squareShader);
     }   
 
     //////////////
@@ -308,43 +432,24 @@ export class Scene
         // your own design!  If you want to use other meshes, load them in the constructor
         // above.  See the constructor for an example of how to load an OBJ file.
 
-        if(this.text !== null){
+    //     if(this.text !== null){
 
-             // Bind the texture in texture channel 0
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text);//cubemap instead
+    //          // Bind the texture in texture channel 0
+    //         gl.activeTexture(gl.TEXTURE0);
+    //         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text);//cubemap instead
 
-            // Set the uniform to texture channel zero
-            gl.uniform1i(shader.uniform('cube_texture'), 0);
+    //         // Set the uniform to texture channel zero
+    //         gl.uniform1i(shader.uniform('cube_texture'), 0);
 
-            //Set up the cube transformation
-            mat4.identity(this.modelMatrix);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [50, 50, 50]);
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-            // Draw the cube
-            this.cubemap.render(gl, shader);
-        }
+    //         //Set up the cube transformation
+    //         mat4.identity(this.modelMatrix);
+    //         mat4.scale(this.modelMatrix, this.modelMatrix, [50, 50, 50]);
+    //         // Set the model matrix in the shader
+    //         gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+    //         // Draw the cube
+    //         this.cubemap.render(gl, shader);
+    //     }
 
-
-        // Draw the Square! 
-        // Bind the texture in texture channel 1
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.text2)
-             
-        // Set the uniform to texture channel zero
-        gl.uniform1i(shader.uniform('square_texture'), 1);
-        mat4.identity(this.modelMatrix);
-        mat4.scale(this.modelMatrix, this.modelMatrix, [0.6, 0.51, 0.6]);
-        mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, 0.5, 0.0]);
-        // Set the model matrix in the shader
-        gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-        // Set the color
-      //  gl.uniform3f( shader.uniform('uColor'), 0.8, 0.8, 0.0);
-        // Draw the cube
-        this.square.render(gl, shader);
-        
-          
         // Reset the model matrix to the identity
         mat4.identity(this.modelMatrix);
        
@@ -449,7 +554,7 @@ export class Scene
     resetCamera() 
     {
         // Set the camera's default position/orientation
-        this.camera.orient([0,1,3], [0,0,0], [0,1,0]); // Modifies the camera
+        this.camera.orient([0,1,20], [0,0,0], [0,1,0]); // Modifies the camera
         // Retrieve the new view matrix
         this.camera.getViewMatrix(this.viewMatrix); // New view matrix 
     }
