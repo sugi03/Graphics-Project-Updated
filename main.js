@@ -31,7 +31,6 @@ function main() {
     gl.enable(gl.DEPTH_TEST);
 
     // Compile/link shader programs
-   // wireShader = ShaderProgram.compile(gl, ShaderCode.FLAT_WIRE_VERT, ShaderCode.FLAT_WIRE_FRAG);
     flatShader = ShaderProgram.compile(gl, ShaderCode.FLAT_VERT, ShaderCode.FLAT_FRAG);
 
     // Compile/link the skybox shader program

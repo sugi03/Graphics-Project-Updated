@@ -181,6 +181,5 @@ export class Camera
         var sky_mat = new Float32Array(this.viewMatrix);
         sky_mat[12] = sky_mat[13] = sky_mat[14] = 0.0;//Resets the translation back to the origin
         return sky_mat;
-
     }
 }
