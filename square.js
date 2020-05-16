@@ -9,7 +9,7 @@ export function buildSquare()
 
     const objData = {
         points: [
-            [-side, -side, side], [side, -side, side], [side, side, side], [-side, side, side],
+            [-side, -side, 0], [side, -side, 0], [side, side, 0], [-side, side, 0],
         ],
 
         normals: [

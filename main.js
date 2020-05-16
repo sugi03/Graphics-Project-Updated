@@ -10,7 +10,6 @@ import * as glMatrix from './gl-matrix/common.js';
 let gl = null;           // The WebGL context object
 let canvas = null;       // The canvas element
 let flatShader = null;   // The shader program for the grid
-//let wireShader = null;   // The shader program for the
 let scene = null;        // The scene
 
 let skyShader = null;    // The shader program for the skybox
@@ -31,7 +30,6 @@ function main() {
     gl.enable(gl.DEPTH_TEST);
 
     // Compile/link shader programs
-   // wireShader = ShaderProgram.compile(gl, ShaderCode.FLAT_WIRE_VERT, ShaderCode.FLAT_WIRE_FRAG);
     flatShader = ShaderProgram.compile(gl, ShaderCode.FLAT_VERT, ShaderCode.FLAT_FRAG);
 
     // Compile/link the skybox shader program

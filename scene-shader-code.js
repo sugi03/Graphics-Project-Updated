@@ -35,7 +35,6 @@ in vec3 fPosition;
 
 out vec4 fragColor;
 uniform vec3 uColor;
-uniform vec3 diffuseLight;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 
@@ -43,11 +42,17 @@ void main() {
     vec3 n = normalize(fNormal); //unit normal at the surface
     vec3 eyeSpace = normalize(fPosition);
 
+    //Calculate ambient lighting
+    float ambientStrength = 0.2;
+    vec3 ambient = ambientStrength * lightColor;
+  
+    //Calculate diffuse lighting
     vec3 lightDirection = normalize(lightPos - eyeSpace); //distance of the light vector - eye space
 
     float nDotLight = max(dot(lightDirection, n), 0.0); //dot product of the light direction and surface normal
 
     vec3 diffuse = lightColor * uColor * nDotLight;
 
-    fragColor = vec4(diffuse, 1.0);
+    vec3 result = (ambient + diffuse) * uColor;
+    fragColor = vec4(result, 1.0);
 }`;
