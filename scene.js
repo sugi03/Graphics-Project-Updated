@@ -6,12 +6,12 @@ import { makeCube } from './cube.js';
 import { loadObjMesh } from './objloader.js';
 import * as glMatrix from './gl-matrix/common.js';
 import * as mat4 from "./gl-matrix/mat4.js";
+import * as vec3 from "./gl-matrix/vec3.js";
 import { buildCube } from './skybox.js';
 import { loadSkybox } from './skybox.js';
 import { loadSquare } from './square.js';
 import { buildSquare } from './square.js'
-import {GLMesh} from './glmesh.js';
-import { transformMat4, floor } from './gl-matrix/vec3.js'
+
 
 /**
  * Represents the entire scene.
@@ -52,100 +52,100 @@ export class Scene
         this.grid = new Grid(gl);   // The reference grid
         this.cube = new RenderMeshBary(gl, makeCube());
 
+
+        ///////////////////
+        // Create Skybox //
+        //////////////////s
+
         //Load the skybox textures
         const dir = "textures/";
         loadSkybox(gl,dir).then((texture) => {this.text = texture});
 
-        // Square Texture
-        //const dir2 = "textures/smoke7.png";
-        this.cloud_texture = null; 
-        const dir2 = "textures/smoke7.png";
+        // Create the skybox object
+        this.cubemap = new RenderMeshBary(gl, buildCube());
+
+        ////////////////////////////
+        // Create cloud particles //
+        ///////////////////////////
+
+        // Load in the cloud texture
+        const dir2 = "textures/cloud_4.png";
         loadSquare(gl, dir2).then((cloudTexture) => {this.cloud_texture = cloudTexture});
 
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // Initialize Blend
+        //initialize blending needed to make the cloud png transparent
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+     
+        //These arrays will hold the random numbers generated to create a new placement/scaling of clouds every time the program is loaded
+        this.cloudScale = []; // Scaling
+        this.cloudTranslation = []; // Translating
 
-        // Number of clouds to generate
-        this.num = Math.random() * 10; 
+        //the random number should be between 30 and -30
+        let max = 75; //max = the maximum random number
+        let min = -75; //mint = the minimum random number 
+ 
+         // For loop to get different size clouds 
+         for (let i = 0; i < 100; i++)
+         {
+            let scaleNum = Math. random() * (max - min) + min;
+            this.cloudScale.push([scaleNum, scaleNum, 0]); 
+         }
+    
+         // For loop to translate the clouds
+         for (let i = 0; i < 100; i++)
+         {
+             let translateNumX = Math.random() * (max - min) + min;
+             let translateNumY = 0;
+             let translateNumZ = Math.random() * (max - min) + min;
+             this.cloudTranslation.push([translateNumX, translateNumY, translateNumZ]);
+         }
+ 
+         // Create the Squares
+         this.squareArray = [];
+         for (let i = 0; i < 100; i++)
+         {
+             this.square = new RenderMeshBary(gl, buildSquare());
+             this.squareArray.push(this.square);
+         }
 
-       this.cloudArray = []; // Scaling
-       this.cloudAngle = []; // Rotating
-       this.cloudTranslation = []; // Translating
+        ///////////////////////////
+        // Load in scene objects //
+        //////////////////////////
 
-        // To get different size clouds 
-        for (let i = 0; i < 100; i++)
-        {
-            let scaleNum = Math.random() * 2;
-            this.cloudArray.push([scaleNum, scaleNum, 0]); 
-        }
-      //  console.log(this.cloudArray);
-       
-        // To rotate by different angles
-        for (let i = 0; i < 100; i++)
-        {  
-            let angle = Math.PI / Math.random() * 2;
-            while (angle == 0)
-            {
-                angle = Math.PI / Math.random() * 2;
-            }
-            this.cloudAngle.push(angle); 
-        }
-       // console.log(this.cloudAngle);
-
-        // To translate the clouds
-        for (let i = 0; i < 100; i++)
-        {
-            let translateNumX = Math.random() * 5;
-            let translateNumY = Math.random() * 0.25;
-            let translateNumZ = Math.random() * 1;
-            this.cloudTranslation.push([translateNumX, translateNumY, translateNumZ]);
-        }
-       
-
-        //////////////
-        // PART ONE //
-        //////////////
-
-        // Load the cow from an OBJ file.  Caution: the fetch method is 
+        // Caution: the fetch method is 
         // asynchronous, so the mesh will not be immediately available.  
         // Make sure to check for null before rendering.  Use this as an example
         // to load other OBJ files.
 
-        // this.clouds = null;
-        // fetch('data/clouds.obj')
-        //     .then( (response) => {
-        //         return response.text();
-        //     })
-        //     .then( (text) => {
-        //         let objMesh = loadObjMesh(text);
-        //         this.clouds = new RenderMeshBary(gl, objMesh);
-        //     })
+        this.moon = null;
+        fetch('data/moon.obj')
+            .then( (response) => {
+                return response.text();
+            })
+            .then( (text) => {
+                let objMesh = loadObjMesh(text);
+                this.moon = new RenderMeshBary(gl, objMesh);
+            })
 
-        // this.island = null;
-        // fetch('data/Low+Poly+Island.obj')
-        //     .then( (response) => {
-        //         return response.text();
-        //     })
-        //     .then( (text) => {
-        //         let objMesh = loadObjMesh(text);
-        //         this.island = new RenderMeshBary(gl, objMesh);
-        //     })
-
-
-        ////////////////////
-        // Create Cubemap //
-        ////////////////////
-        this.cubemap = new RenderMeshBary(gl, buildCube()); // Loading the skybox cube
-
-        // Create the Squares
-        this.squareArray = [];
-        for (let i = 0; i < 100; i++)
-        {
-            this.square = new RenderMeshBary(gl, buildSquare());
-            this.squareArray.push(this.square);
-        }
-  
+        this.turbine = null;
+        fetch('data/turbine+island.obj')
+            .then( (response) => {
+                return response.text();
+            })
+            .then( (text) => {
+                let objMesh = loadObjMesh(text);
+                this.turbine = new RenderMeshBary(gl, objMesh);
+            })
         
-    } 
+        this.crane = null;
+        fetch('data/crane.obj')
+            .then( (response) => {
+                return response.text();
+            })
+            .then( (text) => {
+                let objMesh = loadObjMesh(text);
+                this.crane = new RenderMeshBary(gl, objMesh);
+            })
+    }
 
     /**
      * A convenience method to set all three matrices in the shader program.
@@ -162,36 +162,59 @@ export class Scene
         gl.uniformMatrix4fv(shader.uniform('uProj'), false, this.projMatrix);
     }
 
-    cloudScale()
-    {  
-        // To get different size clouds 
-        let scaleNum = Math.random() * 2;
-        this.cloudArray = [scaleNum, scaleNum, 0]; 
-       // mat4.scale(this.modelMatrix, this.modelMatrix, this.cloudArray);
-    }
 
-    cloudRotate()
+    /**
+     * Draw the Scene.  This method will be called repeatedly as often as possible.
+     * 
+     * @param {Number} time time in milliseconds
+     * @param {WebGL2RenderingContext} gl 
+     * @param {ShaderProgram} skyShader the shader to use when drawing the Skybox/cube map
+     * @param {ShaderProgram} sceneShader the shader to use when drawing the scene, it will apply light and the object color
+     * @param {ShaderProgram} squareShader the shader to use when drawing the cloud particles 
+     * @param {ShaderProgram} flatShader the shader to use when drawing the Grid used to orient from the origin for the most part
+     */
+    render(time, gl, flatShader, skyShader, sceneShader, squareShader) 
     {
-        // To rotate by different angles
-        let angle = Math.PI / Math.random() * 2;
-        while (angle == 0)
-        {
-            angle = Math.PI / Math.random() * 2;
-        }
-        this.cloudAngle.push(angle); 
-       // mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.cloudAngle);
-    }
+        this.pollKeys();
 
-    cloudTranslate()
-    { 
-        // To translate the clouds
-        let translateNumX = Math.random() * -1;
-        let translateNumY = Math.random() * 0.25;
-        let translateNumZ = Math.random() * 2;
-        this.cloudTranslation = [translateNumX, translateNumY, translateNumZ];
-       // mat4.translate(this.modelMatrix, this.modelMatrix, this.cloudTranslation);
-    }
+        /*
+        // Draw the grid using flatShader
+        flatShader.use(gl);
+        this.setMatrices(gl, flatShader);
+        this.grid.render(gl, flatShader);
+        */
 
+        // Draw the skybox with the skyShader
+        skyShader.use(gl);
+        this.setMatrices(gl, skyShader);
+        this.drawSkybox(gl, skyShader);
+
+        // Draw the cloud particles with the squareShader
+        squareShader.use(gl);
+        this.setMatrices(gl, squareShader);
+        this.drawSquare(gl, squareShader);
+        
+        // Draw the imported obj with the sceneShader
+        sceneShader.use(gl);//enabling shader
+
+        //set the uniform variables for the scene lights 
+        const lightPos = gl.getUniformLocation(sceneShader.programId, 'lightPos');
+        gl.uniform3f( lightPos, 5.0, 10.0, 10.0);
+
+        const lightColor = gl.getUniformLocation(sceneShader.programId, 'lightColor');
+        gl.uniform3f( lightColor, 1.0, 1.0, 1.0);
+
+        this.setMatrices(gl, sceneShader);
+        this.drawScene(gl, sceneShader);
+        
+    } 
+
+    /**
+     * Draw the squares needed for the particles and applies the cloud texture
+     * 
+     * @param {WebGL2RenderingContext} gl
+     * @param {ShaderProgram} shader the shader program
+     */
     drawSquare(gl, shader) 
     {
         if (this.cloud_texture !== null)
@@ -203,22 +226,44 @@ export class Scene
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, this.cloud_texture);
         
-            // // Set the uniform to texture channel zero
+            // Set the uniform to texture channel 1
             gl.uniform1i(shader.uniform('square_texture'), 1);
-            mat4.identity(this.modelMatrix);
 
             // Generate clouds! 
             for (let i = 0; i < 100; i++)
             {
-               // mat4.identity(this.modelMatrix);
-                // this.cloudScale();
-                // this.cloudRotate();
-                // this.cloudTranslate();
-               // mat4.identity(this.modelMatrix);
-                mat4.scale(this.modelMatrix, this.modelMatrix, this.cloudArray[i]);
-                mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.cloudAngle[i]);
-                //mat4.rotateZ(this.modelMatrix, this.modelMatrix, Math.PI / 0.5);
+                mat4.identity(this.modelMatrix);
+
+                //Look at pdf 13, slide 11
+                let middlePoint = this.cloudTranslation[i];
+                let cameraPoint = this.camera.eye;
+                let upDirection = [0, 1, 0]; //pointing in the positive y direction
+                let w = [0, 0, 0];
+                let u = [0, 0, 0];
+                let v = [0, 0, 0];
+                
+                //w = camera point - middle of the square   
+                w = vec3.subtract(w, cameraPoint, middlePoint);           
+                vec3.normalize(w, w); //normalize w 
+
+                // u = up x w 
+                vec3.cross(u, upDirection, w);
+                vec3.normalize(u,u);
+
+                // v = w x u 
+                vec3.cross(v, w, u);
+                vec3.normalize(v, v);
+
+                let rotationMatrix = [
+                    u[0], u[1], u[2], 0,
+                    v[0], v[1], v[2], 0,
+                    w[0], w[1], w[2], 0,
+                    0, 0, 0, 1
+                  ];
+
                 mat4.translate(this.modelMatrix, this.modelMatrix, this.cloudTranslation[i]);
+                mat4.multiply(this.modelMatrix, this.modelMatrix, rotationMatrix);
+                mat4.scale(this.modelMatrix, this.modelMatrix, this.cloudScale[i]);
 
                 gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
                 
@@ -227,44 +272,8 @@ export class Scene
     
                 // Reset the model matrix to the identity
                 mat4.identity(this.modelMatrix);
+              }
 
-                // // New Scale 
-                // let scaleNum = Math.random() * 2;
-                // this.cloudArray = [scaleNum, scaleNum, 0]; 
-
-                // // To rotate by different angles
-                // let angle = Math.PI / Math.random() * 2;
-                // while (angle == 0)
-                // {
-                //     angle = Math.PI / Math.random() * 2;
-                // }
-                // this.cloudAngle = angle; 
-
-                // // To translate the clouds
-                // let translateNumX = Math.random() * -1;
-                // let translateNumY = Math.random() * 0.25;
-                // let translateNumZ = Math.random() * 2;
-
-                // this.cloudArray = [translateNumX, translateNumY, translateNumZ];
-            }
-           
-            // Generate clouds! 
-        
-          
-            // mat4.scale(this.modelMatrix, this.modelMatrix, [3.0, 3.0, 3.0]);
-            // mat4.rotateZ(this.modelMatrix, this.modelMatrix, Math.PI / 0.5);
-            // mat4.translate(this.modelMatrix, this.modelMatrix, [1.0, 0, 2.0]);
-
-            // gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-                
-            // // Draw the Square
-            // this.squareArray[1].render(gl, shader);
-    
-            // // Reset the model matrix to the identity
-             mat4.identity(this.modelMatrix);
-
-
-            
             gl.disable(gl.BLEND);
             gl.depthMask(true);
         }
@@ -276,22 +285,23 @@ export class Scene
      * @param {WebGL2RenderingContext} gl
      * @param {ShaderProgram} shader the shader program
      */
-    drawSkybox(gl, shader)
-    {
-        if(this.text !== null)
-        {
+    drawSkybox(gl, shader){
+        if(this.text !== null){
+            let sky_view = this.camera.translatelessCameraMatrix();//import this
+
             // Bind the texture in texture channel 0
            gl.activeTexture(gl.TEXTURE0);
-           gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text); // Cubemap instead
+           gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text);//cubemap instead
 
            // Set the uniform to texture channel zero
            gl.uniform1i(shader.uniform('cube_texture'), 0);
 
            //Set up the cube transformation
            mat4.identity(this.modelMatrix);
-           mat4.scale(this.modelMatrix, this.modelMatrix, [50, 50, 50]);
+           mat4.scale(this.modelMatrix, this.modelMatrix, [175, 175, 175]);
            // Set the model matrix in the shader
            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+           gl.uniformMatrix4fv(shader.uniform('uView'), false, sky_view);
            // Draw the cube
            this.cubemap.render(gl, shader);
        
@@ -299,59 +309,221 @@ export class Scene
            mat4.identity(this.modelMatrix);
        }
     }
-
+    
     /**
-     * Draw the Scene.  This method will be called repeatedly as often as possible.
+     * Draw the objects in the scene.
      * 
-     * @param {Number} time time in milliseconds
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} wireShader the shader to use when drawing meshes 
-     * @param {ShaderProgram} flatShader the shader to use when drawing the Grid
+     * @param {WebGL2RenderingContext} gl
+     * @param {ShaderProgram} shader the shader program
      */
-    render(time, gl, flatShader, skyShader, sceneShader, squareShader) 
+    drawScene(gl, shader) 
     {
-        this.pollKeys();
+        // TODO: Part 1
+        // The code below draws an example scene consisting of just one box and 
+        // a cow.  This is intended as an example only.  Replace with a scene of
+        // your own design!  If you want to use other meshes, load them in the constructor
+        // above.  See the constructor for an example of how to load an OBJ file.
+        
+        if(this.moon !== null){
+            // Set up the moon's transformation
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [30, 30, 0.25]);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [4.5, 4.5, 4.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 0.82, 0.90, 1.0);
+            // Draw the cow
+            this.moon.render(gl, shader);
+        }
+        
+        if(this.turbine !== null){
+            // Set up the moon's transformation
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [1, 1, 1]);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [0.5, 0.5, 0.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.89, 0.75);
+            // Draw the cow
+            this.turbine.render(gl, shader);
+        }
+        
+        if(this.crane !== null){
+            /////////
+            // RED //
+            /////////
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [3, 1, 2]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 45);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.0, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
 
-        // Draw the grid using flatShader
-        flatShader.use(gl);
-        this.setMatrices(gl, flatShader);
-        this.grid.render(gl, flatShader);
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [5, 10, -25]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 20);
+            mat4.rotateX(this.modelMatrix, this.modelMatrix, 75);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [2, 2, 2]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.0, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
 
-        // Sky Shader
-        skyShader.use(gl);
-        this.setMatrices(gl, skyShader);
-        this.drawSkybox(gl, skyShader);
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-20, 10, -50]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 60);
+            mat4.rotateX(this.modelMatrix, this.modelMatrix, 75);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [.5, .5, .5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.0, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
 
-        // Square Shader
-        squareShader.use(gl); // Enables the shader in the pipeline 
-        this.setMatrices(gl, squareShader);
-        this.drawSquare(gl, squareShader);
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [30, 10, 50]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 60);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [1.5, 1.5, 1.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.0, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
 
-        // this.setMatrices(gl, squareShader);
-        // this.drawSquare(gl, squareShader);
-     
-        // Scene Shader
-        sceneShader.use(gl);
-        const diffuseLight = gl.getUniformLocation(sceneShader.programId, 'diffuseLight');
-        gl.uniform3f( diffuseLight, 0.2,0.2,0.2);
-   
-        let position = [5.0, 10.0, 1.0];
- 
-        position = transformMat4(position, position, this.viewMatrix);
- 
-        const lightPos = gl.getUniformLocation(sceneShader.programId, 'lightPos');
-        gl.uniform3f( lightPos, position[0], position[1], position[2]);
-   
-        const lightColor = gl.getUniformLocation(sceneShader.programId, 'lightColor');
-        gl.uniform3f( lightColor, 0.1,0.6,0.8);
-        this.setMatrices(gl, sceneShader);
-        this.drawScene(gl, sceneShader);
+            
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-60, -3, -45]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 60);
+            mat4.rotateX(this.modelMatrix, this.modelMatrix, 25);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [1.5, 1.5, 1.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.0, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+            
 
-    }   
+            //////////
+            // BLUE //
+            //////////
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [0, 1, 4]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 60);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [0.6, 0.6, 0.6]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 0.0, 0.0, 1.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
 
-    //////////////
-    // PART TWO //  --> Need A, D, E, Q, S, W
-    //////////////
+
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [12, 10, 3]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 40);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [2, 2, 2]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 0.0, 0.0, 1.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-20, 0, 20]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 45);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 0.0, 0.0, 1.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [0, 5, 50]);
+            mat4.rotateZ(this.modelMatrix, this.modelMatrix, 45);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [0.5, 0.5, 0.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 0.0, 0.0, 1.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            ////////////
+            // YELLOW //
+            ////////////
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-2, 1, 1]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 90);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.67, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-15, 15, 4]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 100);
+            mat4.rotateX(this.modelMatrix, this.modelMatrix, 75);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [1.5, 1.5, 1.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.67, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [40, 5, -60]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 90);
+            mat4.rotateX(this.modelMatrix, this.modelMatrix, 50);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [1.25, 1.25, 1.25]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.67, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [25, 8, 30]);
+            mat4.rotateZ(this.modelMatrix, this.modelMatrix, 45);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.67, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-30, 10, 50]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, 60);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [1.5, 1.5, 1.5]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 0.67, 0.0);
+            // Draw the crane
+            this.crane.render(gl, shader);
+
+        }
+        // Reset the model matrix to the identity
+        mat4.identity(this.modelMatrix);       
+    }
+    
     /**
      * Checks to see which keys are currently pressed, and updates the camera
      * based on the results.
@@ -371,14 +543,14 @@ export class Scene
             // Key D (RIGHT)
             if (this.controls.keyDown("KeyD"))
             {
-                this.camera.track(.05, 0);
+                this.camera.track(.2, 0);
                 this.camera.getViewMatrix(this.viewMatrix);
             }
             
             // Key Q (UP)
             if (this.controls.keyDown("KeyQ"))
             { 
-                this.camera.track(0, .05);
+                this.camera.track(0, .2);
                 this.camera.getViewMatrix(this.viewMatrix);
 
             }
@@ -386,102 +558,73 @@ export class Scene
             // Key A (LEFT)
             if (this.controls.keyDown("KeyA"))
             {
-                this.camera.track(-.05, 0);
+                this.camera.track(-.2, 0);
                 this.camera.getViewMatrix(this.viewMatrix);
             }
 
             // Key E (DOWN)
             if (this.controls.keyDown("KeyE"))
             {
-                this.camera.track(0, -.05);
+                this.camera.track(0, -.2);
                 this.camera.getViewMatrix(this.viewMatrix);
             }
 
             // Key S (Zoom In)
             if (this.controls.keyDown("KeyS"))
             {
-                this.camera.dolly(.05);
+                this.camera.dolly(.2);
                 this.camera.getViewMatrix(this.viewMatrix);
             }
 
             // Key W (Zoom Out)
             if (this.controls.keyDown("KeyW"))
             {
-                this.camera.dolly(-.05); 
+                this.camera.dolly(-.2); 
                 this.camera.getViewMatrix(this.viewMatrix);
             }
         }
     }
 
-    
-    
-    //////////////
-    // PART ONE //
-    //////////////
+    //////////
+    // TURN //
+    //////////
     /**
-     * Draw the objects in the scene.
+     * This method is called when the mouse moves while the left mouse button
+     * is pressed.  This should apply either a "orbit" motion to the camera
+     * or a "turn" motion depending on this.mode.
      * 
-     * @param {WebGL2RenderingContext} gl
-     * @param {ShaderProgram} shader the shader program
+     * @param {Number} deltaX change in the mouse's x coordinate
+     * @param {Number} deltaY change in the mouse's y coordinate
      */
-    drawScene(gl, shader) 
-    {
-        // TODO: Part 1
-        // The code below draws an example scene consisting of just one box and 
-        // a cow.  This is intended as an example only.  Replace with a scene of
-        // your own design!  If you want to use other meshes, load them in the constructor
-        // above.  See the constructor for an example of how to load an OBJ file.
+    leftDrag( deltaX, deltaY ) { 
+        // TODO: Part 2
+        // Implement this method.
+        if(this.mode === "fly"){
+            this.camera.turn(deltaX * 0.001 , deltaY * 0.001);
+            this.camera.getViewMatrix(this.viewMatrix);
+        }
 
-    //     if(this.text !== null){
+        if(this.mode === "mouse"){
+            this.camera.orbit(deltaX * 0.001, deltaY * 0.001);
+            this.camera.getViewMatrix(this.viewMatrix);
+        }
+    }
 
-    //          // Bind the texture in texture channel 0
-    //         gl.activeTexture(gl.TEXTURE0);
-    //         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.text);//cubemap instead
+    ///////////
+    // ZOOM //
+    //////////
+   /**
+     * Called when the mouse wheel is turned to zoom in and out of the scene
+     * 
+     * @param {Number} delta change amount
+     */
+    mouseWheel(delta) {
 
-    //         // Set the uniform to texture channel zero
-    //         gl.uniform1i(shader.uniform('cube_texture'), 0);
-
-    //         //Set up the cube transformation
-    //         mat4.identity(this.modelMatrix);
-    //         mat4.scale(this.modelMatrix, this.modelMatrix, [50, 50, 50]);
-    //         // Set the model matrix in the shader
-    //         gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-    //         // Draw the cube
-    //         this.cubemap.render(gl, shader);
-    //     }
-
-        // Reset the model matrix to the identity
-        mat4.identity(this.modelMatrix);
-       
-
-        
-        // if(this.clouds !== null) {
-        //     // Set up the cow's transformation
-        //     mat4.identity(this.modelMatrix);
-        //     //mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, 10.00, 0.0]);
-        //     //mat4.scale(this.modelMatrix, this.modelMatrix, [2.0, 2.0, 2.0]);
-        //     // Set the model matrix in the shader
-        //     gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-        //     // Set the color in the shader
-        //     gl.uniform3f( shader.uniform('uColor'), 1.0, 1.0, 1.0);
-        //     // Draw the cow
-        //     this.clouds.render(gl, shader);
-        // }
-
-        // if(this.island !== null) {
-        //     // Set up the cow's transformation
-        //     mat4.identity(this.modelMatrix);
-        //     mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, 1.05, 0.25]);
-        //     mat4.scale(this.modelMatrix, this.modelMatrix, [0.2, 0.2, 0.2]);
-        //     // Set the model matrix in the shader
-        //     gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-        //     // Set the color in the shader
-        //     gl.uniform3f( shader.uniform('uColor'), 1.0, 1.0, 1.0);
-        //     // Draw the cow
-        //     this.island.render(gl, shader);
-        // }
-
-       
+        if(this.mode === "mouse"){
+            this.camera.dolly(delta * 0.005);
+            this.camera.getViewMatrix(this.viewMatrix);
+           // gl.uniformMatrix4fv(shader.uniform('uView'), false, this.viewMatrix);
+        }
     }
 
     /**
@@ -501,49 +644,15 @@ export class Scene
         gl.viewport(0, 0, width, height);
     }
 
-    ////////////////
-    // PART THREE //
-    ////////////////
     /**
      * Sets this.projMatrix to the appropriate projection matrix.
      */
     setProjectionMatrix() 
     {
-        // TODO: Part 3
-        // Set the projection matrix to the appropriate matrix based on this.projType.  
-        // Currently, uses a perspective projection only.
-
         const aspect = this.width / this.height;
         if (this.projType === 'perspective')
         {
             mat4.perspective(this.projMatrix, glMatrix.toRadian(45.0), aspect, 0.5, 1000.0);
-        }
-    }
-
-    //////////
-    // TURN //
-    //////////
-    /**
-     * This method is called when the mouse moves while the left mouse button
-     * is pressed. This should apply either a "orbit" motion to the camera
-     * or a "turn" motion depending on this.mode.
-     * 
-     * @param {Number} deltaX change in the mouse's x coordinate
-     * @param {Number} deltaY change in the mouse's y coordinate
-     */
-    leftDrag( deltaX, deltaY ) 
-    { 
-        // TODO: Part 2
-        // Implement this method.
-
-        deltaX = deltaX * .001;
-        deltaY = deltaY * .001;
-
-        // Mouse Mode = TURN 
-        if (this.mode === 'mouse')
-        {
-            this.camera.turn(deltaX, deltaY);
-            this.camera.getViewMatrix(this.viewMatrix);
         }
     }
 
@@ -554,7 +663,7 @@ export class Scene
     resetCamera() 
     {
         // Set the camera's default position/orientation
-        this.camera.orient([0,1,20], [0,0,0], [0,1,0]); // Modifies the camera
+        this.camera.orient([0,30,80], [0,0,0], [0,1,0]); // Modifies the camera
         // Retrieve the new view matrix
         this.camera.getViewMatrix(this.viewMatrix); // New view matrix 
     }
