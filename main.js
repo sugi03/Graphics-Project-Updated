@@ -4,15 +4,7 @@ import { Scene } from './scene.js';
 import { SCENE_VERT_CODE, SCENE_FRAG_CODE } from './scene-shader-code.js';
 import { VERT_CODE, FRAG_CODE } from './skybox-shader-code.js';
 import { SQUARE_VERT_CODE, SQUARE_FRAG_CODE } from './square-shader-code.js';
-import { MERCURY_VERT_CODE, MERCURY_FRAG_CODE } from './mercury-shader-code.js';
-import { VENUS_VERT_CODE, VENUS_FRAG_CODE } from './venus-shader-code.js';
-import { EARTH_VERT_CODE, EARTH_FRAG_CODE } from './earth-shader-code.js';
-import { MARS_VERT_CODE, MARS_FRAG_CODE } from './mars-shader-code.js';
-import { JUPITER_VERT_CODE, JUPITER_FRAG_CODE } from './jupiter-shader-code.js';
-import { SATURN_VERT_CODE, SATURN_FRAG_CODE } from './saturn-shader-code.js';
-import { URANUS_VERT_CODE, URANUS_FRAG_CODE } from './uranus-shader-code.js';
-import { NEPTUNE_VERT_CODE, NEPTUNE_FRAG_CODE } from './neptune-shader-code.js';
-
+import { PLANET_VERT_CODE, PLANET_FRAG_CODE } from './planet-shader-code.js';
 
 import * as glMatrix from './gl-matrix/common.js';
 
@@ -22,16 +14,9 @@ let flatShader = null;   // The shader program for the grid
 let scene = null;        // The scene
 
 let skyShader = null;    // The shader program for the skybox
-let sceneShader = null; 
+let sceneShader = null;  // The shader program to draw the objects in the scene 
 let squareShader = null; // The shader program for the square
-let mercuryShader = null; // The shader program for Mercury
-let venusShader = null; // The shader program for Venus
-let earthShader = null; // The shader program for Earth
-let marsShader = null; // The shader program for Mars
-let jupiterShader = null; // The shader program for Jupiter
-let saturnShader = null; // The shader program for Saturn
-let uranusShader = null; // The shader program for Uranus
-let neptuneShader = null; // The shader program for Neptune
+let planetShader = null; // The shader program for the solar system
 
 window.addEventListener("load", main);
 
@@ -60,31 +45,12 @@ function main() {
     sceneShader = ShaderProgram.compile(gl, SCENE_VERT_CODE, SCENE_FRAG_CODE);
 
     // Compile/Link the Square Shader Program
+    // This shader applies the cloud texture to a square
     squareShader = ShaderProgram.compile(gl, SQUARE_VERT_CODE, SQUARE_FRAG_CODE);
 
-    // Compile/Link the Mercury Shader Program
-    mercuryShader = ShaderProgram.compile(gl, MERCURY_VERT_CODE, MERCURY_FRAG_CODE);
-
-    // Compile/Link the Venus Shader Program
-    venusShader = ShaderProgram.compile(gl, VENUS_VERT_CODE, VENUS_FRAG_CODE);
-
-    // Compile/Link the Earth Shader Program
-    earthShader = ShaderProgram.compile(gl, EARTH_VERT_CODE, EARTH_FRAG_CODE);
-
-    // Compile/Link the Mars Shader Program
-    marsShader = ShaderProgram.compile(gl, MARS_VERT_CODE, MARS_FRAG_CODE);
-
-    // Compile/Link the Jupiter Shader Program
-    jupiterShader = ShaderProgram.compile(gl, JUPITER_VERT_CODE, JUPITER_FRAG_CODE);
-
-    // Compile/Link the Saturn Shader Program
-    saturnShader = ShaderProgram.compile(gl, SATURN_VERT_CODE, SATURN_FRAG_CODE);
-
-    // Compile/Link the Uranus Shader Program
-    uranusShader = ShaderProgram.compile(gl, URANUS_VERT_CODE, URANUS_FRAG_CODE);
-
-    // Compile/Link the Neptune Shader Program
-    neptuneShader = ShaderProgram.compile(gl, NEPTUNE_VERT_CODE, NEPTUNE_FRAG_CODE);
+    // Compile/Link the Planet Shader Program
+    // This shader applies textures to an object
+    planetShader = ShaderProgram.compile(gl, PLANET_VERT_CODE, PLANET_FRAG_CODE);
     
     window.addEventListener('resize', resize);
     scene = new Scene(gl, canvas);
@@ -129,5 +95,5 @@ function draw(t) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Draw the scene
-    scene.render(t, gl, flatShader, skyShader, sceneShader, squareShader, mercuryShader, venusShader, earthShader, marsShader, jupiterShader, saturnShader, uranusShader, neptuneShader);
+    scene.render(t, gl, flatShader, skyShader, sceneShader, squareShader, planetShader);
 }

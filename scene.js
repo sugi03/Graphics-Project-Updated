@@ -66,7 +66,7 @@ export class Scene
         this.cubemap = new RenderMeshBary(gl, buildCube());
 
         ////////////////////////////
-        // Create Cloud Particles //
+        // Create cloud particles //
         ///////////////////////////
 
         // Load in the cloud texture
@@ -84,31 +84,31 @@ export class Scene
         let max = 75; //max = the maximum random number
         let min = -75; //mint = the minimum random number 
  
-        // For loop to get different size clouds 
-        for (let i = 0; i < 100; i++)
-        {
+         // For loop to get different size clouds 
+         for (let i = 0; i < 100; i++)
+         {
             let scaleNum = Math. random() * (max - min) + min;
             this.cloudScale.push([scaleNum, scaleNum, 0]); 
-        }
+         }
     
-        // For loop to translate the clouds
-        for (let i = 0; i < 100; i++)
-        {
-            let translateNumX = Math.random() * (max - min) + min;
-            let translateNumY = 0;
-            let translateNumZ = Math.random() * (max - min) + min;
-            this.cloudTranslation.push([translateNumX, translateNumY, translateNumZ]);
-        }
+         // For loop to translate the clouds
+         for (let i = 0; i < 100; i++)
+         {
+             let translateNumX = Math.random() * (max - min) + min;
+             let translateNumY = 0;
+             let translateNumZ = Math.random() * (max - min) + min;
+             this.cloudTranslation.push([translateNumX, translateNumY, translateNumZ]);
+         }
  
-        // Create the Squares
-        this.squareArray = [];
-        for (let i = 0; i < 100; i++)
-        {
-            this.square = new RenderMeshBary(gl, buildSquare());
-            this.squareArray.push(this.square);
-        }
+         // Create the Squares
+         this.squareArray = [];
+         for (let i = 0; i < 100; i++)
+         {
+             this.square = new RenderMeshBary(gl, buildSquare());
+             this.squareArray.push(this.square);
+         }
 
-        //////////////////////////////
+          //////////////////////////////
         // Load in Planet Textures //
         ////////////////////////////
         // MERCURY 
@@ -142,7 +142,6 @@ export class Scene
         // NEPTUNE
         const neptune_dir = "textures/neptune.jpg";
         loadPlanetTexture(gl, neptune_dir).then((texture) => {this.neptuneTexture = texture});
-
 
         ///////////////////////////
         // Load in scene objects //
@@ -182,26 +181,26 @@ export class Scene
                 let objMesh = loadObjMesh(text);
                 this.crane = new RenderMeshBary(gl, objMesh);
             })
-        
-        this.plane = null;
-        fetch('data/Plane.obj')
-            .then( (response) => {
-                return response.text();
-            })
-            .then( (text) => {
-                let objMesh = loadObjMesh(text);
-                this.plane = new RenderMeshBary(gl, objMesh);
-            })
 
-        this.planet = null;
-        fetch('data/sphere.obj')
-            .then( (response) => {
-                return response.text();
-            })
-            .then( (text) => {
-                let objMesh = loadObjMesh(text);
-                this.planet = new RenderMeshBary(gl, objMesh);
-            })
+            this.plane = null;
+            fetch('data/Plane.obj')
+                .then( (response) => {
+                    return response.text();
+                })
+                .then( (text) => {
+                    let objMesh = loadObjMesh(text);
+                    this.plane = new RenderMeshBary(gl, objMesh);
+                })
+    
+            this.planet = null;
+            fetch('data/sphere.obj')
+                .then( (response) => {
+                    return response.text();
+                })
+                .then( (text) => {
+                    let objMesh = loadObjMesh(text);
+                    this.planet = new RenderMeshBary(gl, objMesh);
+                })
     }
 
     /**
@@ -230,9 +229,16 @@ export class Scene
      * @param {ShaderProgram} squareShader the shader to use when drawing the cloud particles 
      * @param {ShaderProgram} flatShader the shader to use when drawing the Grid used to orient from the origin for the most part
      */
-    render(time, gl, flatShader, skyShader, sceneShader, squareShader, mercuryShader, venusShader, earthShader, marsShader, jupiterShader, saturnShader, uranusShader, neptuneShader) 
+    render(time, gl, flatShader, skyShader, sceneShader, squareShader, planetShader) 
     {
         this.pollKeys();
+
+        /*
+        // Draw the grid using flatShader
+        flatShader.use(gl);
+        this.setMatrices(gl, flatShader);
+        this.grid.render(gl, flatShader);
+        */
 
         // Draw the skybox with the skyShader
         skyShader.use(gl);
@@ -247,7 +253,7 @@ export class Scene
         // Draw the imported obj with the sceneShader
         sceneShader.use(gl);//enabling shader
 
-        // Set the uniform variables for the scene lights 
+        //set the uniform variables for the scene lights 
         const lightPos = gl.getUniformLocation(sceneShader.programId, 'lightPos');
         gl.uniform3f( lightPos, 5.0, 10.0, 10.0);
 
@@ -256,311 +262,12 @@ export class Scene
 
         this.setMatrices(gl, sceneShader);
         this.drawScene(gl, sceneShader);
-
-        // Draw Mercury with mercuryShader
-        mercuryShader.use(gl);
-        this.setMatrices(gl, mercuryShader);
-        this.drawMercury(gl, mercuryShader);
-
-        // Draw Venus with venusShader
-        venusShader.use(gl);
-        this.setMatrices(gl, venusShader);
-        this.drawVenus(gl, venusShader);
-
-        // Draw Earth with earthShader
-        earthShader.use(gl);
-        this.setMatrices(gl, earthShader);
-        this.drawEarth(gl, earthShader);
-
-        // Draw Mars with marsShader
-        marsShader.use(gl);
-        this.setMatrices(gl, marsShader);
-        this.drawMars(gl, marsShader);
-
-        // Draw Jupiter with jupiterShader
-        jupiterShader.use(gl);
-        this.setMatrices(gl, jupiterShader);
-        this.drawJupiter(gl, jupiterShader);
-
-        // Draw Saturn with saturnShader
-        saturnShader.use(gl);
-        this.setMatrices(gl, saturnShader);
-        this.drawSaturn(gl, saturnShader);
-
-        // Draw Uranus with uranusShader
-        uranusShader.use(gl);
-        this.setMatrices(gl, uranusShader);
-        this.drawUranus(gl, uranusShader);
-
-        // Draw Neptune with neptuneShader
-        neptuneShader.use(gl);
-        this.setMatrices(gl, neptuneShader);
-        this.drawNeptune(gl, neptuneShader);
+        
+        // Draw the solar system with the planetShader
+        planetShader.use(gl);
+        this.setMatrices(gl, planetShader);
+        this.drawPlanet(gl, planetShader);
     } 
-
-    /**
-     * Draws Neptune and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawNeptune(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.neptuneTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('neptune_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [24, 25, 33]);
-           // mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [3, 3, 3]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Uranus and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawUranus(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.uranusTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('uranus_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [18, 25, 25]);
-           // mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [4, 4, 4]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Saturn without rings and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawSaturn(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.saturnTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('saturn_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [9, 24, 14]);
-           // mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [6, 6, 6]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Jupiter and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawJupiter(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.jupiterTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('jupiter_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [-5, 24, 0]);
-            mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [8, 8, 8]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Mars and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawMars(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.marsTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('mars_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [-20, 25, -10]);
-            mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [3, 3, 3]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Earth and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawEarth(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.earthTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('earth_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [-33, 25, -21]);
-            mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [5, 5, 5]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Venus and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawVenus(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.venusTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('venus_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [-50, 25, -35]);
-            mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [5, 5, 5]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
-
-    /**
-     * Draws Mercury and applies its corresponding texture.
-     * @param {WebGL2RenderingContext} gl 
-     * @param {ShaderProgram} shader 
-     */
-    drawMercury(gl, shader)
-    {
-        if (this.planet !== null)
-        {
-            // Bind the texture in texture channel 1
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.mercuryTexture);
-       
-            // Set the uniform to texture channel 1
-            gl.uniform1i(shader.uniform('mercury_texture'), 0);
-
-            // Set up Mercury's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [-60, 25, -40]);
-           // mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [2, 2, 2]);
-
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-     
-            // Draw the planet
-            this.planet.render(gl, shader);
-
-            // Reset the model matrix to the identity
-           mat4.identity(this.modelMatrix);
-        }
-    }
 
     /**
      * Draw the squares needed for the particles and applies the cloud texture
@@ -578,10 +285,9 @@ export class Scene
             // Bind the texture in texture channel 1
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, this.cloud_texture);
-      
+        
             // Set the uniform to texture channel 1
             gl.uniform1i(shader.uniform('square_texture'), 1);
-         
 
             // Generate clouds! 
             for (let i = 0; i < 100; i++)
@@ -641,7 +347,7 @@ export class Scene
      */
     drawSkybox(gl, shader){
         if(this.text !== null){
-            let sky_view = this.camera.translatelessCameraMatrix(); //import this
+            let sky_view = this.camera.translatelessCameraMatrix();//import this
 
             // Bind the texture in texture channel 0
            gl.activeTexture(gl.TEXTURE0);
@@ -652,7 +358,7 @@ export class Scene
 
            //Set up the cube transformation
            mat4.identity(this.modelMatrix);
-           mat4.scale(this.modelMatrix, this.modelMatrix, [175, 175, 175]);
+           mat4.scale(this.modelMatrix, this.modelMatrix, [200, 200, 200]);
            // Set the model matrix in the shader
            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
            gl.uniformMatrix4fv(shader.uniform('uView'), false, sky_view);
@@ -664,6 +370,152 @@ export class Scene
        }
     }
     
+
+   /**
+     * Draws Neptune and applies its corresponding texture.
+     * @param {WebGL2RenderingContext} gl 
+     * @param {ShaderProgram} shader 
+     */
+    drawPlanet(gl, shader)
+    {
+        if (this.planet !== null)
+        {
+            if (this.neptuneTexture !== null){
+                // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.neptuneTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [24, 50, 33]);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [3, 3, 3]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader)
+            }
+
+            if(this.uranusTexture !== null){
+                // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.uranusTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Uranus's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [18, 50, 25]);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [4, 4, 4]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+
+            if(this.saturnTexture !== null){
+                 // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.saturnTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [9, 49, 14]);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [6, 6, 6]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+
+            if(this.jupiterTexture !== null){
+                 // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.jupiterTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [-5, 49, 0]);
+                mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [8, 8, 8]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+
+            if(this.marsTexture !== null){
+                // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.marsTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [-20, 50, -10]);
+                mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [3, 3, 3]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+
+            if(this.earthTexture !== null){
+                 // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.earthTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [-33, 50, -21]);
+                mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [5, 5, 5]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+
+            if(this.venusTexture !== null){
+                // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.venusTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [-50, 50, -35]);
+                mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [5, 5, 5]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+
+            if(this.mercuryTexture !== null){
+                // Bind the texture in texture channel 0
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.mercuryTexture);
+                // Set the uniform to texture channel 0
+                gl.uniform1i(shader.uniform('planet_texture'), 0);
+                // Set up Mercury's transformation
+                mat4.identity(this.modelMatrix);
+                mat4.translate(this.modelMatrix, this.modelMatrix, [-60, 50, -40]);
+                mat4.scale(this.modelMatrix, this.modelMatrix, [2, 2, 2]);
+                // Set the model matrix in the shader
+                gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+                // Draw the planet
+                this.planet.render(gl, shader);
+            }
+            // Reset the model matrix to the identity
+            mat4.identity(this.modelMatrix);
+        }
+    }
+
     /**
      * Draw the objects in the scene.
      * 
@@ -671,28 +523,24 @@ export class Scene
      * @param {ShaderProgram} shader the shader program
      */
     drawScene(gl, shader) 
-    {
-        // TODO: Part 1
-        // The code below draws an example scene consisting of just one box and 
-        // a cow.  This is intended as an example only.  Replace with a scene of
-        // your own design!  If you want to use other meshes, load them in the constructor
-        // above.  See the constructor for an example of how to load an OBJ file.
-        
-        // if(this.moon !== null){
-        //     // Set up the moon's transformation
-        //     mat4.identity(this.modelMatrix);
-        //     mat4.translate(this.modelMatrix, this.modelMatrix, [30, 30, 0.25]);
-        //     mat4.scale(this.modelMatrix, this.modelMatrix, [4.5, 4.5, 4.5]);
-        //     // Set the model matrix in the shader
-        //     gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-        //     // Set the color in the shader
-        //     gl.uniform3f( shader.uniform('uColor'), 0.82, 0.90, 1.0);
-        //     // Draw the cow
-        //     this.moon.render(gl, shader);
-        // }
-        
+    {   
+        if (this.plane !== null){
+            // Set up the plane's transformation
+            mat4.identity(this.modelMatrix);
+            mat4.translate(this.modelMatrix, this.modelMatrix, [-15, 55, -7]);
+            mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.6);
+            mat4.rotateZ(this.modelMatrix, this.modelMatrix, Math.PI / 0.60);
+            mat4.scale(this.modelMatrix, this.modelMatrix, [0.01, 0.01, 0.01]);
+            // Set the model matrix in the shader
+            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
+            // Set the color in the shader
+            gl.uniform3f( shader.uniform('uColor'), 1.0, 1.0, 1.0);
+            // Draw the plane
+            this.plane.render(gl, shader);
+        }
+
         if(this.turbine !== null){
-            // Set up the moon's transformation
+            // Set up the turbine's transformation
             mat4.identity(this.modelMatrix);
             mat4.translate(this.modelMatrix, this.modelMatrix, [1, 1, 1]);
             mat4.scale(this.modelMatrix, this.modelMatrix, [0.5, 0.5, 0.5]);
@@ -700,7 +548,7 @@ export class Scene
             gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
             // Set the color in the shader
             gl.uniform3f( shader.uniform('uColor'), 1.0, 0.89, 0.75);
-            // Draw the cow
+            // Draw the turbine
             this.turbine.render(gl, shader);
         }
         
@@ -872,25 +720,8 @@ export class Scene
             gl.uniform3f( shader.uniform('uColor'), 1.0, 0.67, 0.0);
             // Draw the crane
             this.crane.render(gl, shader);
-        }
 
-        ////////////
-        // PLANE //
-        ///////////
-        if (this.plane !== null){
-            // Set up the moon's transformation
-            mat4.identity(this.modelMatrix);
-            mat4.translate(this.modelMatrix, this.modelMatrix, [-30, -77, -70]);
-            mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.PI / 0.8);
-            mat4.scale(this.modelMatrix, this.modelMatrix, [0.02, 0.02, 0.02]);
-            // Set the model matrix in the shader
-            gl.uniformMatrix4fv(shader.uniform('uModel'), false, this.modelMatrix);
-            // Set the color in the shader
-            gl.uniform3f( shader.uniform('uColor'), 0.94, 0.81, 0.99);
-            // Draw the cow
-            this.plane.render(gl, shader);
         }
-
         // Reset the model matrix to the identity
         mat4.identity(this.modelMatrix);       
     }
@@ -904,11 +735,6 @@ export class Scene
         // Only do this in "fly" mode.
         if( this.mode !== "fly" ) return;
 
-        // TODO: Part 2
-        // Use this.controls.keyDown() to determine which keys are pressed, and 
-        // move the camera based on the results.
-        // See: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
-        // for details on key codes.
         else 
         {
             // Key D (RIGHT)
@@ -968,8 +794,6 @@ export class Scene
      * @param {Number} deltaY change in the mouse's y coordinate
      */
     leftDrag( deltaX, deltaY ) { 
-        // TODO: Part 2
-        // Implement this method.
         if(this.mode === "fly"){
             this.camera.turn(deltaX * 0.001 , deltaY * 0.001);
             this.camera.getViewMatrix(this.viewMatrix);
